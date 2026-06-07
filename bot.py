@@ -51,15 +51,33 @@ KEYWORDS = [
     if k.strip()
 ]
 
-# Danh sách nhóm — mỗi nhóm một dòng, định dạng: Tên nhóm|RSS URL
-# Ví dụ: GROUPS=Nhóm BĐS HN|https://rss.app/feeds/...\nNhóm BĐS HCM|https://rss.app/feeds/...
+# Danh sách nhóm — hỗ trợ 2 cách cấu hình:
+#
+# Cách 1 (khuyên dùng): Biến riêng cho từng nhóm
+#   GROUP_1=Tên nhóm A|https://rss.app/feeds/xxx.xml
+#   GROUP_2=Tên nhóm B|https://rss.app/feeds/yyy.xml
+#   ... đến GROUP_20
+#
+# Cách 2: Một biến GROUPS, phân cách bằng dấu phẩy
+#   GROUPS=Tên A|https://url-a.xml,Tên B|https://url-b.xml
 GROUPS = []
-groups_raw = get_env("GROUPS", "")
-for line in groups_raw.split("\n"):
-    line = line.strip()
-    if "|" in line:
-        name, url = line.split("|", 1)
+
+# Cách 1: đọc GROUP_1 đến GROUP_20
+for i in range(1, 21):
+    val = os.environ.get(f"GROUP_{i}", "").strip()
+    if val and "|" in val:
+        name, url = val.split("|", 1)
         GROUPS.append({"name": name.strip(), "rss_url": url.strip()})
+
+# Cách 2: đọc GROUPS nếu cách 1 không có nhóm nào
+if not GROUPS:
+    groups_raw = get_env("GROUPS", "")
+    # Thử tách bằng dấu phẩy trước
+    for entry in groups_raw.replace("\n", ",").split(","):
+        entry = entry.strip()
+        if "|" in entry:
+            name, url = entry.split("|", 1)
+            GROUPS.append({"name": name.strip(), "rss_url": url.strip()})
 
 # Tần suất quét (phút)
 CHECK_INTERVAL = int(get_env("CHECK_INTERVAL_MINUTES", "5"))
